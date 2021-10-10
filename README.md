@@ -2,7 +2,7 @@
 
 Licence generation & validation using python.
 
-![](example_use_case.jpg)
+![](example_use_case.jpeg)
 
 ## Database setup:
 
