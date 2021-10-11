@@ -1,5 +1,5 @@
-import secrets
-import datetime
+from datetime import datetime, timedelta
+from secrets import token_urlsafe
 from http import HTTPStatus
 from flask import Blueprint, Response, request
 from db_models.shared import db
@@ -16,8 +16,8 @@ def create_license() -> Response:
     expiration_days = request.form.get("expiration_days")
 
     if auth_key == master_key and expiration_days:
-        new_license = secrets.token_urlsafe(16)
-        expiration_date = datetime.datetime.today() + datetime.timedelta(days=float(expiration_days))
+        new_license = token_urlsafe(16)
+        expiration_date = datetime.today() + timedelta(days=float(expiration_days))
 
         license_obj = License(value=new_license, expiration_date=expiration_date)
 
@@ -39,12 +39,12 @@ def extend_license() -> Response:
         stored_license = License.query.filter_by(value=received_license).first()
 
         if stored_license:
-            current_date = datetime.datetime.today().date()
+            current_date = datetime.today().date()
 
             if stored_license.expiration_date > current_date:
-                stored_license.expiration_date += datetime.timedelta(days=float(expiration_days))
+                stored_license.expiration_date += timedelta(days=float(expiration_days))
             else:
-                stored_license.expiration_date = current_date + datetime.timedelta(days=float(expiration_days))
+                stored_license.expiration_date = current_date + timedelta(days=float(expiration_days))
 
             db.session.commit()
 
@@ -80,12 +80,11 @@ def authenticate_token() -> Response:
 
     if auth_key == client_key and received_token:
         decoded_token = verify_token(received_token)
-        stored_license = None
 
         if decoded_token:
             stored_license = License.query.get(decoded_token["license_id"])
 
-        if stored_license and stored_license.expiration_date >= datetime.datetime.today().date():
-            return Response(response="Valid token", status=HTTPStatus.OK, mimetype="text/plain")
+            if stored_license and stored_license.expiration_date >= datetime.today().date():
+                return Response(response="Valid token", status=HTTPStatus.OK, mimetype="text/plain")
 
     return Response(response="Invalid request", status=HTTPStatus.FORBIDDEN, mimetype="text/plain")
