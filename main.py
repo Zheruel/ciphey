@@ -8,7 +8,9 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.register_blueprint(license_controller)
 
-db.init_app(app)
+with app.app_context():
+    db.init_app(app)
+    db.create_all()
 
 migrate = Migrate(app, db)
 
