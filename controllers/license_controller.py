@@ -60,8 +60,9 @@ def verify_license() -> Response:
 
     if auth_key == client_key and received_license:
         stored_license = License.query.filter_by(value=received_license).first()
+        current_date = datetime.today().date()
 
-        if stored_license and not stored_license.has_been_used:
+        if stored_license and not stored_license.has_been_used and stored_license.expiration_date >= current_date:
             token = generate_token(stored_license.id)
             stored_license.token = token
             stored_license.has_been_used = True
