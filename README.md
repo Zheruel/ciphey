@@ -6,6 +6,8 @@ Licence generation & validation using a simple Flask web application.
 
 ## Database setup:
 
+To use a proper database:
+
 First you will need to set the correct database URI in `main.py` under:
 `app.config["SQLALCHEMY_DATABASE_URI"]`
 
