@@ -120,4 +120,3 @@ def test_authenticate_token(client):
 
     rv = client.post("/authenticatetoken", data={"token": token}, headers={"auth": client_key})
     assert rv.status_code == HTTPStatus.FORBIDDEN
-
