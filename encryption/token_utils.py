@@ -9,7 +9,7 @@ def generate_token(license_id: int) -> str:
     return token
 
 
-def verify_token(token: str) -> Optional[dict]:
+def validate_token(token: str) -> Optional[dict]:
     try:
         decoded_jwt = decode(token, token_key, algorithms=["HS256"])
     except InvalidSignatureError:
