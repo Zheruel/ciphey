@@ -4,20 +4,17 @@ Licence generation & validation using a simple Flask web application.
 
 ![](example_use_case.jpeg)
 
-## Database setup:
-
-To use a proper database:
-
-First you will need to set the correct database URI in `main.py` under:
-`app.config["SQLALCHEMY_DATABASE_URI"]`
-
-Then you will need to apply the migrations on a fresh db by using:
-
-`flask db upgrade`
-
 ## Setup
 
 Requirements are listed in `requirements.txt`
+
+To use a proper database:
+
+First you will need to set the correct database URI in `settings.py`.
+
+Then you should remove this line `db.create_all()` in `main.py`.
+
+Then you run the migrations using: `flask db upgrade`.
 
 This application can easily be modified or extended to fit any personal needs.
 All controllers in `/controllers` can be registered in `main` as a blueprint by simply
@@ -30,4 +27,9 @@ need to create and run new migrations.
 ## Endpoints
 
 A postman collection is included with the project under `/postman`. This gives you an example
-for accessing the endpoints and how the requests towards them should be constructed
+for accessing the endpoints and how the requests towards them should be constructed.
+
+## Testing
+
+App is covered using tests, if you change or add features you should also extend the tests
+cuz they will make your life easier.
