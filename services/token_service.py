@@ -1,10 +1,11 @@
 from datetime import datetime
+
 from db_models.license import License
-from encryption.token_utils import validate_token
+from encryption import token_utils
 
 
-def verify_token(received_token: str) -> bool:
-    decoded_token = validate_token(received_token)
+def verify_token(received_token: str):
+    decoded_token = token_utils.validate_token(received_token)
 
     if decoded_token:
         stored_license = License.query.get(decoded_token["license_id"])

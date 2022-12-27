@@ -1,9 +1,12 @@
-import pytest
+from datetime import datetime, timedelta
 from http import HTTPStatus
+
+import pytest
+
+from db_models.license import License
 from main import app, db
 from settings import master_key, client_key
-from db_models.license import License
-from datetime import datetime, timedelta
+from static_values import license_urls
 
 
 @pytest.fixture
@@ -18,26 +21,30 @@ def client():
         db.session.remove()
         db.drop_all()
 
+
 def test_create_license(client):
     # Expiration days and auth key not correct
-    rv = client.get("/createlicense")
+    rv = client.get(license_urls.CREATE_LICENSE)
 
     assert rv.status_code == HTTPStatus.FORBIDDEN
 
     # Auth key and expiration days correct
-    rv = client.get("/createlicense", data={"expiration_days": "30"}, headers={"auth": master_key})
+    rv = client.get(license_urls.CREATE_LICENSE, data={"expiration_days": "30"},
+                    headers={"auth": master_key})
 
     assert rv.status_code == HTTPStatus.CREATED
 
 
 def test_extend_license(client):
     # Expiration days license and auth key not correct
-    rv = client.post("/extendlicense")
+    rv = client.post(license_urls.EXTEND_LICENSE)
 
     assert rv.status_code == HTTPStatus.FORBIDDEN
 
     # License does not exist
-    rv = client.post("/extendlicense", data={"expiration_days": "30", "license": "123"}, headers={"auth": master_key})
+    rv = client.post(license_urls.EXTEND_LICENSE,
+                     data={"expiration_days": "30", "license": "123"},
+                     headers={"auth": master_key})
 
     assert rv.status_code == HTTPStatus.FORBIDDEN
 
@@ -47,7 +54,9 @@ def test_extend_license(client):
     db.session.add(License(value="123", expiration_date=expiration_date))
     db.session.commit()
 
-    client.post("/extendlicense", data={"expiration_days": "30", "license": "123"}, headers={"auth": master_key})
+    client.post(license_urls.EXTEND_LICENSE,
+                data={"expiration_days": "30", "license": "123"},
+                headers={"auth": master_key})
 
     extended_license = License.query.filter_by(value="123").first()
     extended_date = expiration_date + timedelta(days=30)
@@ -60,7 +69,9 @@ def test_extend_license(client):
     db.session.add(License(value="231", expiration_date=expired_date))
     db.session.commit()
 
-    client.post("/extendlicense", data={"expiration_days": "30", "license": "231"}, headers={"auth": master_key})
+    client.post(license_urls.EXTEND_LICENSE,
+                data={"expiration_days": "30", "license": "231"},
+                headers={"auth": master_key})
 
     extended_license = License.query.filter_by(value="231").first()
 
@@ -69,15 +80,17 @@ def test_extend_license(client):
 
 def test_verify_license(client):
     # License and auth key not correct
-    rv = client.post("/verifylicense")
+    rv = client.post(license_urls.VERIFY_LICENSE)
 
     assert rv.status_code == HTTPStatus.FORBIDDEN
 
     # License does not exist or it has been used before
-    db.session.add(License(value="used", expiration_date=datetime.today(), has_been_used=True))
+    db.session.add(License(value="used", expiration_date=datetime.today(),
+                           has_been_used=True))
     db.session.commit()
 
-    rv = client.post("/verifylicense", data={"license": "123"}, headers={"auth": client_key})
+    rv = client.post(license_urls.VERIFY_LICENSE, data={"license": "123"},
+                     headers={"auth": client_key})
 
     assert rv.status_code == HTTPStatus.FORBIDDEN
 
@@ -85,7 +98,8 @@ def test_verify_license(client):
     db.session.add(License(value="123", expiration_date=datetime.today()))
     db.session.commit()
 
-    rv = client.post("/verifylicense", data={"license": "123"}, headers={"auth": client_key})
+    rv = client.post(license_urls.VERIFY_LICENSE, data={"license": "123"},
+                     headers={"auth": client_key})
 
     assert rv.status_code == HTTPStatus.OK
 
@@ -97,7 +111,7 @@ def test_verify_license(client):
 
 def test_authenticate_token(client):
     # Auth key and token not correct
-    rv = client.post("/authenticatetoken")
+    rv = client.post(license_urls.AUTHENTICATE_TOKEN)
 
     assert rv.status_code == HTTPStatus.FORBIDDEN
 
@@ -105,10 +119,12 @@ def test_authenticate_token(client):
     db.session.add(License(value="123", expiration_date=datetime.today()))
     db.session.commit()
 
-    rv = client.post("/verifylicense", data={"license": "123"}, headers={"auth": client_key})
+    rv = client.post(license_urls.VERIFY_LICENSE, data={"license": "123"},
+                     headers={"auth": client_key})
     token = rv.data.decode("utf-8")
 
-    rv = client.post("/authenticatetoken", data={"token": token}, headers={"auth": client_key})
+    rv = client.post(license_urls.AUTHENTICATE_TOKEN, data={"token": token},
+                     headers={"auth": client_key})
     assert rv.status_code == HTTPStatus.OK
 
     # Token attached to expired license
@@ -119,5 +135,7 @@ def test_authenticate_token(client):
 
     db.session.commit()
 
-    rv = client.post("/authenticatetoken", data={"token": token}, headers={"auth": client_key})
+    rv = client.post(license_urls.AUTHENTICATE_TOKEN, data={"token": token},
+                     headers={"auth": client_key})
+    
     assert rv.status_code == HTTPStatus.FORBIDDEN
