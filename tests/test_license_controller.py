@@ -12,10 +12,11 @@ def client():
 
     with app.test_client() as client:
         with app.app_context():
-            db.init_app(app)
             db.create_all()
         yield client
 
+        db.session.remove()
+        db.drop_all()
 
 def test_create_license(client):
     # Expiration days and auth key not correct
